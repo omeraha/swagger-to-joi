@@ -142,9 +142,10 @@ const getKeyObjectText = (parameter) => {
 
   let definition = `Joi.object().keys({
     `;
-  if ('properties' in parameter) {
-    Object.keys(parameter.properties).forEach((propertyName) => {
-      const property = { ...parameter.properties[propertyName], name: propertyName, level: parameter.level + 1 };
+  if ('properties' in parameter || 'properties' in parameter.schema) {
+    const propertiesLocation = parameter.properties ? parameter.properties : parameter.schema.properties
+    Object.keys(propertiesLocation).forEach((propertyName) => {
+      const property = { ...propertiesLocation[propertyName], name: propertyName, level: parameter.level + 1 };
 
       // check override
       if ('overrideKeys' in options) {
@@ -279,6 +280,7 @@ const parse = (route, componentsParam, opt) => {
   let pathJoi = '';
   let queryJoi = '';
   let bodyJoi = '';
+  let headersJoi = '';
 
   if (route.parameters) {
     route.parameters.forEach((parameter) => {
@@ -286,6 +288,7 @@ const parse = (route, componentsParam, opt) => {
 
       if (parameter.in === 'path') pathJoi += keyText;
       else if (parameter.in === 'query') queryJoi += keyText;
+      else if (parameter.in === 'header') headersJoi += keyText
     });
   }
 
@@ -304,6 +307,12 @@ const parse = (route, componentsParam, opt) => {
   if (pathJoi.length > 0) {
     rObject.path = `Joi.object().keys({
     ${pathJoi.substr(0, pathJoi.length - 6)}
+  })`;
+  }
+
+  if (headersJoi.length > 0) {
+    rObject.headers = `Joi.object().keys({
+    ${headersJoi.substr(0, headersJoi.length - 6)}
   })`;
   }
 
